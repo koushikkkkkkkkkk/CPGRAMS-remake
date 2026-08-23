@@ -1,34 +1,51 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Minimalist Semantic Colors */
+  --system-bg: #FAFAFA;
+  --secondary-bg: #FFFFFF;
+  --tertiary-bg: #F0F0F0;
+  
+  --label-primary: #111111;
+  --label-secondary: #555555;
+  --label-tertiary: #888888;
+  
+  --system-blue: #007AFF;
+  --system-green: #34C759;
+  --system-red: #FF3B30;
+  --system-orange: #FF9500;
+  --system-yellow: #FFCC00;
+
+  --separator-color: #E5E5E5;
+  
+  /* Typography Scale */
+  --font-family: var(--font-geist-sans), -apple-system, sans-serif;
+  
+  /* Minimalist Materials */
+  --material-thin: rgba(255, 255, 255, 0.9);
+  --material-regular: rgba(255, 255, 255, 0.95);
+  --material-thick: #FFFFFF;
+  --glass-border: #E5E5E5;
+  --glass-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+  /* Layout Constants */
+  --nav-height: 64px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html {
-  height: 100%;
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+html.dark-mode {
+  --system-bg: #000000;
+  --secondary-bg: #111111;
+  --tertiary-bg: #222222;
+  
+  --label-primary: #FFFFFF;
+  --label-secondary: #AAAAAA;
+  --label-tertiary: #666666;
+  
+  --separator-color: #333333;
+  
+  --material-thin: rgba(17, 17, 17, 0.9);
+  --material-regular: rgba(17, 17, 17, 0.95);
+  --material-thick: #111111;
+  --glass-border: #333333;
+  --glass-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
 }
 
 * {
@@ -37,13 +54,291 @@ body {
   margin: 0;
 }
 
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  background-color: var(--system-bg);
+  color: var(--label-primary);
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
 a {
   color: inherit;
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+/* Base Utility Classes */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+  width: 100%;
+}
+
+/* Typography - Apple HIG System Scale */
+h1 {
+  font-size: 3.5rem; /* Large Title */
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+}
+
+h2 {
+  font-size: 2rem; /* Title 1 */
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  margin-bottom: 1.2rem;
+}
+
+h3 {
+  font-size: 1.3rem; /* Title 3 */
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+p {
+  color: var(--label-secondary);
+  line-height: 1.5; /* System body line height */
+  margin-bottom: 1.5rem;
+  font-size: 1.0625rem; /* Body */
+  font-weight: 400;
+}
+
+strong {
+  font-weight: 600;
+  color: var(--label-primary);
+}
+
+/* Apple Floating Top Navigation */
+.mac-top-nav-container {
+  position: fixed;
+  top: 24px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 1000;
+  pointer-events: none; /* Let clicks pass through container */
+}
+
+.mac-top-nav {
+  pointer-events: auto; /* Enable clicks on the nav itself */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--material-thick);
+  backdrop-filter: saturate(180%) blur(24px);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  border: 1px solid var(--glass-border);
+  border-radius: 40px;
+  padding: 8px 16px;
+  width: 90%;
+  max-width: 800px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-pill {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--label-secondary);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.nav-pill:hover {
+  color: var(--label-primary);
+  background: rgba(255,255,255,0.05);
+}
+
+.nav-pill.active {
+  background: rgba(255,255,255,0.12);
+  color: var(--label-primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-left: 1px solid var(--separator-color);
+  padding-left: 16px;
+  margin-left: 8px;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--label-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+}
+
+.icon-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--label-primary);
+}
+
+.profile-btn {
+  background: rgba(255,255,255,0.1);
+  color: var(--label-primary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+/* Viewport Adjustments */
+.apple-viewport {
+  padding-top: calc(var(--nav-height) + 40px); /* Clear the fixed nav */
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Minimalist Bento Cards */
+.bento-card {
+  background: var(--secondary-bg);
+  border: 1px solid var(--separator-color);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.bento-card:hover {
+  box-shadow: var(--glass-shadow);
+  transform: translateY(-2px);
+}
+
+/* Form Elements */
+.input-field, .textarea-field {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--separator-color);
+  background: var(--tertiary-bg);
+  color: var(--label-primary);
+  font-size: 1.0625rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.input-field:focus, .textarea-field:focus {
+  border-color: var(--system-blue);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.3);
+}
+
+.textarea-field {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--system-blue);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 24px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: #0070E0;
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background-color: var(--tertiary-bg);
+  color: var(--label-primary);
+  border: none;
+  border-radius: 12px;
+  padding: 14px 24px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: #3A3A3C;
+}
+
+/* Utilities */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .content-grid {
+    grid-template-columns: 2fr 1fr;
   }
 }
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, minmax(200px, auto));
+  gap: 1.5rem;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.col-span-2 { grid-column: span 2; }
+.col-span-3 { grid-column: span 3; }
+.col-span-4 { grid-column: span 4; }
+.row-span-2 { grid-row: span 2; }
+
+@media (max-width: 1024px) {
+  .bento-grid { grid-template-columns: repeat(2, 1fr); }
+  .col-span-3, .col-span-4 { grid-column: span 2; }
+}
+@media (max-width: 768px) {
+  .bento-grid { grid-template-columns: 1fr; }
+  .col-span-2, .row-span-2 { grid-column: span 1; grid-row: span 1; }
+  .mac-top-nav-container { top: 12px; }
+  .mac-top-nav { width: 95%; flex-wrap: wrap; justify-content: center; padding: 12px; border-radius: 24px;}
+  .nav-actions { border-left: none; padding-left: 0; margin-top: 12px; width: 100%; justify-content: center; }
+}
+
+/* Micro animations & Staggering */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.2, 0, 0, 1) forwards; }
+.stagger-1 { animation-delay: 0.1s; opacity: 0; }
+.stagger-2 { animation-delay: 0.15s; opacity: 0; }
+.stagger-3 { animation-delay: 0.2s; opacity: 0; }
+.stagger-4 { animation-delay: 0.25s; opacity: 0; }
+
+
