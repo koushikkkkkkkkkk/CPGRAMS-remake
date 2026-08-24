@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import ThemeToggle from "./components/ThemeToggle";
+import Navbar from "./components/Navbar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-sans",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
@@ -24,33 +24,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="apple-layout">
-        
-        {/* Apple HIG Floating Top Navigation Capsule */}
-        <nav className="mac-top-nav-container">
-          <div className="mac-top-nav">
-            
-            <div className="nav-links">
-              <a href="/" className="nav-pill active">Home</a>
-              <a href="/lodge" className="nav-pill">Lodge</a>
-              <a href="/status" className="nav-pill">Status</a>
-              <a href="/contact" className="nav-pill">Contact</a>
-            </div>
-            <div className="nav-actions">
-              <ThemeToggle />
-              <button className="icon-btn">🔔</button>
-              <a href="/login" className="icon-btn profile-btn">KA</a>
-            </div>
-
-          </div>
-        </nav>
-
-        {/* Main Content Viewport */}
-        <main className="apple-viewport">
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+      <body className="min-h-[100dvh] bg-[#0A0A0A] font-sans text-[#EAEAEA] antialiased">
+        <Navbar />
+        <main className="relative pt-[104px]">
           {children}
         </main>
-        
       </body>
     </html>
   );

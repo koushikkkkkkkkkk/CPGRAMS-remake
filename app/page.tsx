@@ -1,126 +1,110 @@
 "use client";
 
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function Dashboard() {
+const citizenStats = [
+  { label: "Resolved this month", value: "18,240", detail: "Across all departments" },
+  { label: "Average response", value: "4.2 days", detail: "Transparent tracking" },
+  { label: "Citizen satisfaction", value: "92%", detail: "Verified resolutions" },
+];
+
+export default function CitizenPortal() {
   const router = useRouter();
 
+  function handleLodgeReport() {
+    router.push("/lodge");
+  }
+
   return (
-    <div className="animate-fade-in" style={{ padding: '2rem 0' }}>
+    <div className="w-full px-4 py-12 sm:px-6 md:py-24 font-mono">
       
-      <div style={{ padding: '0 3rem', marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '3rem', margin: 0 }}>Overview</h1>
-        <p style={{ color: 'var(--label-secondary)', fontSize: '1.2rem', marginTop: '0.5rem' }}>
-          CPGRAMS Dashboard for tracking and lodging civic grievances.
+      {/* Hero & CTA Container (Centered, 3xl) */}
+      <div className="mx-auto max-w-3xl text-center">
+        {/* Hero Section */}
+        <span className="inline-flex items-center border border-[#EAEAEA]/20 bg-[#121212] px-3 py-1 text-xs font-bold tracking-widest text-[#FF2A2A] uppercase">
+          [ CITIZEN PORTAL ]
+        </span>
+        
+        <h1 className="mt-8 text-4xl sm:text-5xl md:text-6xl font-bold leading-tight text-[#EAEAEA] uppercase font-sans tracking-tight">
+          Your voice moves public service forward.
+        </h1>
+        
+        <p className="mt-6 mx-auto max-w-2xl text-sm sm:text-base leading-relaxed text-[#EAEAEA]/60 uppercase tracking-widest">
+          Lodge a grievance in plain language. We route it to the right authority and keep every step visible.
         </p>
+
+        {/* Primary CTA Section */}
+        <div className="mt-12 flex justify-center">
+          <button
+            onClick={handleLodgeReport}
+            className="flex min-h-[64px] min-w-[300px] items-center justify-center border-2 border-[#EAEAEA] bg-[#EAEAEA] px-8 text-lg font-bold text-[#0A0A0A] uppercase tracking-widest transition-all duration-300 hover:bg-transparent hover:text-[#EAEAEA] hover:border-[#FF2A2A] hover:shadow-[0_0_20px_rgba(255,42,42,0.3)]"
+          >
+            [ LOG A REPORT ]
+          </button>
+        </div>
       </div>
 
-      {/* Bento Grid */}
-      <div className="bento-grid">
+      {/* Information Section (Wider, 5xl) */}
+      <div className="mx-auto mt-24 max-w-5xl text-left border border-[#EAEAEA]/20 bg-[#121212] p-8 sm:p-12 md:p-16">
+        <h2 className="mb-6 text-2xl font-bold text-[#FF2A2A] uppercase tracking-widest">
+          ABOUT CPGRAMS
+        </h2>
         
-        {/* Quick Action - Massive Card */}
-        <div 
-          className="bento-card col-span-2 row-span-2 animate-fade-in stagger-1" 
-          style={{ 
-            background: 'var(--label-primary)', 
-            color: 'var(--system-bg)',
-            justifyContent: 'center',
-            alignItems: 'flex-start',
-            cursor: 'pointer',
-            position: 'relative',
-            overflow: 'hidden',
-            border: 'none'
-          }}
-          onClick={() => router.push('/lodge')}
-        >
-          <span style={{ backgroundColor: 'var(--label-secondary)', color: 'var(--system-bg)', padding: '6px 12px', borderRadius: '16px', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2rem' }}>
-            Instant Action
-          </span>
-          <h2 style={{ fontSize: '3rem', margin: 0, color: 'var(--system-bg)' }}>
-            Lodge a Grievance
-          </h2>
-          <p style={{ fontSize: '1.1rem', color: 'var(--system-bg)', marginTop: '0.5rem', maxWidth: '90%', opacity: 0.8 }}>
-            Use your voice or natural language. AI will parse and route it instantly.
+        <div className="space-y-6 text-[#EAEAEA]/80 text-sm md:text-base leading-relaxed font-sans">
+          <p>
+            Centralised Public Grievance Redress and Monitoring System (CPGRAMS) is an online platform available to the citizens 24x7 to lodge their grievances to the public authorities on any subject related to service delivery. It is a single portal connected to all the Ministries/Departments of Government of India and States. Every Ministry and States have role-based access to this system. CPGRAMS is also accessible to the citizens through standalone mobile application downloadable through Google Play store and mobile application integrated with UMANG.
           </p>
-          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center' }}>
-            <span style={{ fontSize: '1.5rem', color: 'var(--system-bg)' }}>→</span>
-          </div>
-        </div>
-
-        {/* Live Metrics */}
-        <div className="bento-card animate-fade-in stagger-2" style={{ borderRadius: '24px', border: '1px solid var(--separator-color)' }}>
-          <h3 style={{ fontSize: '1rem', color: 'var(--label-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Resolution Rate
-          </h3>
-          <div style={{ fontSize: '3.5rem', fontWeight: 700, marginTop: 'auto' }}>
-            89<span style={{ fontSize: '1.5rem' }}>%</span>
-          </div>
-          <p style={{ margin: 0, color: 'var(--system-green)', fontWeight: 600, fontSize: '0.9rem', marginTop: '0.5rem' }}>
-            ↑ 2.4% from last month
+          <p>
+            The status of the grievance filed in CPGRAMS can be tracked with the unique registration ID provided at the time of registration of the complainant. CPGRAMS also provides appeal facility to the citizens if they are not satisfied with the resolution by the Grievance Officer. After closure of grievance if the complainant is not satisfied with the resolution, he/ she can provide feedback. If the rating is 'Poor' the option to file an appeal is enabled. The status of the Appeal can also be tracked by the petitioner with the grievance registration number.
           </p>
         </div>
 
-        {/* Pending Actions */}
-        <div className="bento-card animate-fade-in stagger-3" style={{ cursor: 'pointer', borderRadius: '24px', border: '1px solid var(--separator-color)' }} onClick={() => router.push('/status')}>
-          <h3 style={{ fontSize: '1rem', color: 'var(--label-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Action Required
-          </h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: 'auto' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'var(--system-orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: 'white', fontWeight: 700 }}>
-              1
-            </div>
-            <div>
-              <strong style={{ fontSize: '1.1rem', display: 'block' }}>Resolution Proposed</strong>
-              <span style={{ color: 'var(--label-secondary)', fontSize: '0.9rem' }}>Awaiting your approval</span>
-            </div>
-          </div>
-        </div>
+        <hr className="my-10 border-t border-[#EAEAEA]/20" />
 
-        {/* Recent Updates Ticker */}
-        <div className="bento-card col-span-2 row-span-1 animate-fade-in stagger-4" style={{ justifyContent: 'center' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Civic Updates</h3>
-            <span style={{ fontSize: '0.75rem', backgroundColor: 'var(--tertiary-bg)', padding: '4px 8px', borderRadius: '8px', color: 'var(--system-blue)', fontWeight: 600 }}>LIVE</span>
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--system-blue)' }}></div>
-              <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--label-primary)' }}>Automated APIs deployed.</p>
-              <span style={{ marginLeft: 'auto', color: 'var(--label-tertiary)', fontSize: '0.85rem' }}>2h ago</span>
-            </div>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--separator-color)' }}></div>
-              <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--label-secondary)' }}>New privacy guidelines.</p>
-              <span style={{ marginLeft: 'auto', color: 'var(--label-tertiary)', fontSize: '0.85rem' }}>1d ago</span>
-            </div>
-          </div>
-        </div>
+        <h3 className="mb-6 text-lg font-bold text-[#FF2A2A] uppercase tracking-widest flex items-center gap-3">
+          <span className="bg-[#FF2A2A] text-[#121212] px-2 py-1 text-xs">!</span>
+          ISSUES WHICH ARE NOT TAKEN UP FOR REDRESS
+        </h3>
+        <ul className="space-y-3 text-[#EAEAEA]/80 text-sm md:text-base font-sans list-none">
+          <li className="flex items-start gap-3">
+            <span className="text-[#FF2A2A] font-mono mt-1">{">"}</span> RTI Matters
+          </li>
+          <li className="flex items-start gap-3">
+            <span className="text-[#FF2A2A] font-mono mt-1">{">"}</span> Court related / Subjudice matters
+          </li>
+          <li className="flex items-start gap-3">
+            <span className="text-[#FF2A2A] font-mono mt-1">{">"}</span> Religious matters
+          </li>
+          <li className="flex items-start gap-3">
+            <span className="text-[#FF2A2A] font-mono mt-1">{">"}</span> Grievances of Government employees concerning their service matters including disciplinary proceedings etc. unless the aggrieved employee has already exhausted the prescribed channels keeping in view the DoPT OM No. 11013/08/2013-Estt.(A-III) dated 31.08.2015
+          </li>
+        </ul>
 
-        {/* About CPGRAMS Rules - Full Width Card */}
-        <div className="bento-card col-span-3 animate-fade-in stagger-4" style={{ marginTop: '2rem' }}>
-          <h3 style={{ margin: 0, fontSize: '1.25rem', marginBottom: '1rem', color: 'var(--label-primary)' }}>ABOUT CPGRAMS</h3>
-          <p style={{ fontSize: '0.95rem', color: 'var(--label-secondary)', lineHeight: 1.6, marginBottom: '1rem' }}>
-            Centralised Public Grievance Redress and Monitoring System (CPGRAMS) is an online platform available to the citizens 24x7 to lodge their grievances to the public authorities on any subject related to service delivery. It is a single portal connected to all the Ministries/Departments of Government of India and States.
-          </p>
-          <div style={{ backgroundColor: 'var(--tertiary-bg)', padding: '1.5rem', borderRadius: '12px', borderLeft: '4px solid var(--system-blue)' }}>
-            <strong style={{ display: 'block', color: 'var(--system-blue)', marginBottom: '0.75rem', fontSize: '1rem' }}>ℹ️ Issues which are not taken up for redress:</strong>
-            <ul style={{ margin: 0, paddingLeft: '1.5rem', color: 'var(--label-secondary)', fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <li>RTI Matters</li>
-              <li>Court related / Subjudice matters</li>
-              <li>Religious matters</li>
-              <li>Grievances of Government employees concerning their service matters including disciplinary proceedings etc.</li>
-            </ul>
-          </div>
-          <div style={{ marginTop: '1.5rem' }}>
-            <strong style={{ fontSize: '0.95rem', color: 'var(--label-primary)' }}>Note:</strong>
-            <ol style={{ margin: '0.5rem 0 0 0', paddingLeft: '1.5rem', color: 'var(--label-secondary)', fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <li>If you have not got a satisfactory redress of your grievance within a reasonable period of time, you may seek help of DPG in resolution.</li>
-              <li>Government is not charging fee from the public for filing grievances. All money being paid by the public for filing grievance is going only to M/s CSC only.</li>
-            </ol>
-          </div>
-        </div>
+        <hr className="my-10 border-t border-[#EAEAEA]/20" />
 
+        <h3 className="mb-6 text-lg font-bold text-[#EAEAEA] uppercase tracking-widest">
+          /// NOTE
+        </h3>
+        <ol className="space-y-4 text-[#EAEAEA]/60 text-sm md:text-base font-sans list-decimal list-outside ml-5">
+          <li className="pl-2">
+            If you have not got a satisfactory redress of your grievance within a reasonable period of time, relating to Ministries/Departments and Organisations under the purview of Directorate of Public Grievances(DPG), Cabinet Secretariat, GOI, you may seek help of DPG in resolution.
+          </li>
+          <li className="pl-2">
+            Government is not charging fee from the public for filing grievances. All money being paid by the public for filing grievance is going only to M/s CSC only.
+          </li>
+        </ol>
+      </div>
+
+      {/* Benefits / Stats (Centered, 3xl) */}
+      <div className="mx-auto max-w-3xl mt-24 grid gap-8 sm:grid-cols-3 border-t border-[#EAEAEA]/20 pt-16 text-center">
+        {citizenStats.map((stat) => (
+          <div key={stat.label} className="flex flex-col items-center">
+            <span className="text-4xl font-bold text-[#EAEAEA]">{stat.value}</span>
+            <span className="mt-2 text-sm font-bold text-[#FF2A2A] uppercase tracking-widest">{stat.label}</span>
+            <span className="mt-1 text-xs text-[#EAEAEA]/60 uppercase tracking-widest">{stat.detail}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -1,14 +1,48 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { getGrievanceStatus } from "../../../lib/supabase";
 
 export default function PipelineStatusView() {
   const router = useRouter();
+  const params = useParams();
+  
   const [resolutionStatus, setResolutionStatus] = useState<"pending_citizen_approval" | "resolved" | "appealed">("pending_citizen_approval");
+  const [isLoading, setIsLoading] = useState(true);
+  const [grievanceData, setGrievanceData] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      if (params.id) {
+        try {
+          const data = await getGrievanceStatus(params.id as string);
+          setGrievanceData(data);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    fetchStatus();
+  }, [params.id]);
 
   const handleApprove = () => setResolutionStatus("resolved");
   const handleAppeal = () => setResolutionStatus("appealed");
+
+  if (isLoading) {
+    return <div className="flex h-screen items-center justify-center bg-[#0A0A0A] text-[#EAEAEA] font-mono">[ FETCHING TELEMETRY... ]</div>;
+  }
+
+  if (!grievanceData) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center bg-[#0A0A0A] text-[#EAEAEA] font-mono gap-4">
+        <h1 className="text-3xl text-[#FF2A2A] font-bold">[ ERR: HASH NOT FOUND ]</h1>
+        <button onClick={() => router.push('/status')} className="border border-[#EAEAEA] px-4 py-2 hover:bg-[#EAEAEA] hover:text-[#0A0A0A]">[ RETURN ]</button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '4rem' }} className="animate-fade-in">
@@ -36,7 +70,7 @@ export default function PipelineStatusView() {
               </span>
             </div>
             <p style={{ margin: 0, fontSize: '1rem', color: 'var(--label-secondary)', marginTop: '0.5rem' }}>
-              Reference: <strong style={{ color: 'var(--system-blue)', letterSpacing: '0.05em' }}>#JANS-2026-8891X</strong>
+              Reference: <strong style={{ color: 'var(--system-blue)', letterSpacing: '0.05em' }}>#{grievanceData.tracking_id}</strong>
             </p>
           </div>
         </div>
