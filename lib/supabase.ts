@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import type { AppLanguage } from "./i18n";
 
 // ============================================================================
 // 1. Initialize the Client
@@ -29,37 +30,38 @@ export type ProfileData = {
   state_code: string;
 };
 
-export type GrievancePayload = {
+export type GrievanceSubmission = {
+  title: string;
   description: string;
-  category?: string;
-  location?: string;
-  evidence_url?: string;
+  assignedDepartment: string;
+  isIdentityMasked: boolean;
+  language: AppLanguage;
+  urgencyLevel?: string;
+  tags?: string[];
+  englishTranslation?: string;
 };
 
 export type GrievanceRecord = {
   id: string; // UUID from Supabase
-  tracking_id: string; // CPG-XXXXXXXX
+  tracking_hash: string; // CPG-XXXXXXXX
   user_id: string | null;
   description: string;
   is_anonymous: boolean;
   status: string;
   assigned_department: string | null;
+  category: string;
+  detected_language: string;
+  urgency_level: string;
+  tags: any;
+  english_translation: string;
+  title: string;
 };
 
 // ============================================================================
 // 2. Sign Up / Profile Sync
 // ============================================================================
 
-/**
- * Registers a new user with Supabase Auth and creates a matching profile record.
- * 
- * @param email - User's email
- * @param password - User's password
- * @param profile - Additional user details (name, phone, state)
- * @returns The created user object or throws an error
- */
 export async function signUpUser(email: string, password: string, profile: ProfileData) {
-  // 1. Sign up the user via Supabase Auth
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
@@ -68,12 +70,11 @@ export async function signUpUser(email: string, password: string, profile: Profi
   if (authError) throw authError;
   if (!authData.user) throw new Error("User creation failed: No user returned");
 
-  // 2. Create the matching row in the 'profiles' table
   const { error: profileError } = await supabase
     .from('profiles')
     .insert([
       {
-        id: authData.user.id, // Foreign key to auth.users
+        id: authData.user.id,
         full_name: profile.full_name,
         phone_number: profile.phone_number,
         state_code: profile.state_code,
@@ -81,7 +82,6 @@ export async function signUpUser(email: string, password: string, profile: Profi
     ]);
 
   if (profileError) {
-    // Note: In a robust production environment, you might want a rollback or retry mechanism here
     console.error("Failed to create profile:", profileError);
     throw profileError;
   }
@@ -90,82 +90,80 @@ export async function signUpUser(email: string, password: string, profile: Profi
 }
 
 // ============================================================================
-// 3. Grievance Submission Handler
+// 3. Grievance Submission Handler (New AI Pipeline)
 // ============================================================================
 
-/**
- * Generates a secure, random tracking hash string formatted as 'CPG-XXXXXXXX'.
- */
-function generateTrackingHash(): string {
-  // Generates 8 random uppercase alphanumeric characters
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let hash = '';
-  for (let i = 0; i < 8; i++) {
-    hash += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return `CPG-${hash}`;
+const bytesToHex = (buffer: ArrayBuffer) =>
+  Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, "0")).join("");
+
+async function createMaskedTrackingHash(): Promise<string> {
+  const salt = crypto.getRandomValues(new Uint8Array(32));
+  const payload = `${Date.now()}:${bytesToHex(salt.buffer)}`;
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
+  return `CPG-${bytesToHex(digest).slice(0, 24).toUpperCase()}`;
 }
 
-/**
- * Submits a new grievance to the database and generates a unique tracking ID.
- * 
- * @param payload - Grievance details (description, category, etc.)
- * @param isAnonymous - Boolean determining if user_id should be masked via RLS
- * @returns The generated tracking ID
- */
-export async function submitGrievance(payload: GrievancePayload, isAnonymous: boolean = false) {
-  // Get the current session user if they exist
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  const trackingId = generateTrackingHash();
+function createStandardTrackingHash(): string {
+  const random = crypto.getRandomValues(new Uint32Array(2));
+  return `CPG-${Array.from(random, (value) => value.toString(36).toUpperCase()).join("")}`;
+}
 
-  const { error } = await supabase
-    .from('grievances')
-    .insert([
-      {
-        tracking_id: trackingId,
-        user_id: user ? user.id : null,
-        description: payload.description,
-        category: payload.category || 'General',
-        location: payload.location || null,
-        evidence_url: payload.evidence_url || null,
-        is_anonymous: isAnonymous,
-        status: 'RECEIVED', // Initial status
-      }
-    ]);
+export async function submitMaskedGrievance(input: GrievanceSubmission): Promise<string> {
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError && !input.isIdentityMasked) throw authError;
+  if (!input.isIdentityMasked && !user) throw new Error("Sign in or enable identity masking before submitting.");
 
-  if (error) throw error;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const trackingHash = input.isIdentityMasked
+      ? await createMaskedTrackingHash()
+      : createStandardTrackingHash();
+      
+    const { error } = await supabase.from("grievances").insert({
+      tracking_hash: trackingHash,
+      title: input.title.trim() || "Untitled Grievance",
+      description: input.description.trim(),
+      category: input.assignedDepartment || "General",
+      assigned_department: input.assignedDepartment || "General Grievance Cell",
+      status: "RECEIVED",
+      is_anonymous: input.isIdentityMasked,
+      user_id: input.isIdentityMasked ? null : user?.id ?? null,
+      detected_language: input.language === "ta" ? "tm" : (input.language || "en"),
+      urgency_level: input.urgencyLevel || "Medium",
+      tags: input.tags ? JSON.stringify(input.tags) : null,
+      english_translation: input.englishTranslation || input.description.trim()
+    });
 
-  // Return the tracking ID so the frontend can display it to the user
-  return trackingId;
+    if (!error) return trackingHash;
+    if (error.code !== "23505") throw error;
+  }
+
+  throw new Error("Could not reserve a unique tracking hash. Please try again.");
 }
 
 // ============================================================================
 // 4. Public Status Tracker Lookup
 // ============================================================================
 
-/**
- * Queries the public 'tracked_grievances' view using a tracking hash.
- * 
- * @param trackingId - The CPG-XXXXXXXX tracking string
- * @returns The status and assigned department, or null if not found
- */
-export async function getGrievanceStatus(trackingId: string) {
-  // Try the new schema first (tracking_hash)
-  let { data, error } = await supabase
+export async function getGrievanceStatus(trackingId: string): Promise<any> {
+  const response = await supabase
     .from('grievances')
-    .select('tracking_hash as tracking_id, status, assigned_department, urgency_level, tags, english_translation, title, description')
+    .select('tracking_hash, status, assigned_department, urgency_level, tags, english_translation, title, description')
     .eq('tracking_hash', trackingId)
     .maybeSingle();
 
-  if (error || !data) {
-    // Try the RPC or fallback for older schema
+  let data: any = response.data;
+
+  if (response.error || !data) {
     const fallback = await supabase
       .rpc('get_grievance_by_tracking_hash', { lookup_hash: trackingId })
       .maybeSingle();
     
     if (fallback.error) throw fallback.error;
     data = fallback.data;
+  }
+
+  if (data && data.tracking_hash) {
+    data.tracking_id = data.tracking_hash;
   }
 
   return data;

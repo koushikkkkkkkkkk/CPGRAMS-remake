@@ -6,8 +6,7 @@ import { useTranslation } from "react-i18next";
 import "../../lib/i18n";
 import LodgeTerminal from "../components/LodgeTerminal";
 import RoutingResultCard from "../components/RoutingResultCard";
-import { simulateGrievanceAnalysis, type RoutingResult } from "../../lib/simulatedAi";
-import { submitMaskedGrievance } from "../../lib/supabaseClient";
+import { submitMaskedGrievance } from "../../lib/supabase";
 import type { AppLanguage } from "../../lib/i18n";
 
 export default function LodgeGrievanceOS() {
