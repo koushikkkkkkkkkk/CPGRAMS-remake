@@ -6,7 +6,6 @@ export default function ThemeToggle() {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    // Check initial state
     setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 
@@ -22,8 +21,14 @@ export default function ThemeToggle() {
   };
 
   return (
-    <button aria-label="Toggle Dark Mode" className="icon-btn" onClick={toggleTheme} title="Toggle Dark Mode">
-      {isDark ? "☀️" : "☾"}
+    <button 
+      aria-label="Toggle Theme" 
+      onClick={toggleTheme} 
+      title="Toggle Theme"
+      className="text-sm font-semibold transition-colors hover:text-[var(--color-accent)]"
+      style={{ color: "var(--label-secondary)" }}
+    >
+      {isDark ? "Light" : "Dark"}
     </button>
   );
 }

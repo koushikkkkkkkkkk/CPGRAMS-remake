@@ -2,131 +2,72 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
+import "../../lib/i18n";
 import LodgeTerminal from "../components/LodgeTerminal";
-import { submitGrievance } from "../../lib/supabase";
+import RoutingResultCard from "../components/RoutingResultCard";
+import { simulateGrievanceAnalysis, type RoutingResult } from "../../lib/simulatedAi";
+import { submitMaskedGrievance } from "../../lib/supabaseClient";
+import type { AppLanguage } from "../../lib/i18n";
 
 export default function LodgeGrievanceOS() {
-  const router = useRouter();
-  
+  const router = useRouter(); const { t, i18n } = useTranslation();
   const [step, setStep] = useState<"input" | "processing" | "review">("input");
-
-  const [description, setDescription] = useState("");
-  const [isAnonymous, setIsAnonymous] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const proceedToReview = (submittedDescription: string) => {
-    setStep("processing");
-    setTimeout(() => {
-      setDescription(submittedDescription);
-      setStep("review");
-    }, 1200);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
+  const [description, setDescription] = useState(""); const [title, setTitle] = useState("");
+  const [analysis, setAnalysis] = useState<any>(null); const [masked, setMasked] = useState(true); const [submitting, setSubmitting] = useState(false); const [error, setError] = useState("");
+  const onAnalyze = async (raw: string) => { 
+    setDescription(raw); 
+    setStep("processing"); 
     try {
-      const trackingId = await submitGrievance({
-        description,
-        category: "Infrastructure"
-      }, isAnonymous);
-      
-      localStorage.removeItem("civic_os_draft");
-      router.push(`/status/${trackingId}`);
-    } catch (err) {
-      console.error(err);
-      setIsSubmitting(false);
-      alert("System Error: Failed to execute operation.");
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: raw })
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Analysis failed with status ${res.status}`);
+      }
+      const data = await res.json();
+      setAnalysis(data);
+    } catch (e) {
+      console.error(e);
+      setAnalysis({ department: "General Grievance Cell", urgencyLevel: "Medium", tags: ["error"], englishTranslation: raw } as any);
+    }
+    setStep("review"); 
+  };
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault(); if (!analysis) return; setSubmitting(true); setError("");
+    try { 
+      const trackingHash = await submitMaskedGrievance({ 
+        title: title.trim() || description.slice(0, 80), 
+        description, 
+        assignedDepartment: analysis.department, 
+        isIdentityMasked: masked, 
+        language: (i18n.resolvedLanguage || "en") as AppLanguage,
+        urgencyLevel: (analysis as any).urgencyLevel,
+        tags: (analysis as any).tags,
+        englishTranslation: (analysis as any).englishTranslation
+      }); 
+      window.localStorage.removeItem("civic_os_draft"); 
+      router.push(`/status/${trackingHash}`); 
+    }
+    catch (caught: any) {
+      console.error("Submission error details:", caught);
+      const msg = caught?.message || caught?.details || (typeof caught === 'string' ? caught : "Unable to save the report.");
+      setError(msg);
+      setSubmitting(false);
     }
   };
-
-  return (
-    <div className="min-h-screen flex flex-col items-center pt-24 pb-12 bg-[#0A0A0A] px-4 md:px-12 text-[#EAEAEA] font-mono">
-      <div className="relative flex w-full max-w-[800px] flex-col border border-[#EAEAEA]/20 bg-[#121212] p-8 md:p-12">
-
-        {step === "input" && (
-          <div className="flex w-full flex-col animate-fade-in text-left">
-            <p className="mb-6 text-sm tracking-wider text-[#EAEAEA]/60">
-              WRITE NATURALLY. SYSTEM EXTRACTS LOC, INTENT, URGENCY.
-            </p>
-            <LodgeTerminal onSubmit={proceedToReview} />
-          </div>
-        )}
-
-        {step === "processing" && (
-          <div className="flex min-h-[400px] w-full flex-col items-center justify-center animate-fade-in text-center">
-            <div className="text-[#FF2A2A] text-4xl animate-pulse">|</div>
-            <h2 className="mt-6 text-sm font-bold uppercase tracking-widest text-[#EAEAEA]">
-              {">"} ROUTING AND ANALYZING...
-            </h2>
-          </div>
-        )}
-
-        {step === "review" && (
-          <div className="flex w-full flex-col animate-fade-in text-left">
-            <h1 className="mb-8 text-3xl font-black tracking-tighter uppercase font-sans text-[#EAEAEA]">
-              Review Classification
-            </h1>
-
-            <form onSubmit={handleSubmit} className="flex flex-col gap-8">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="border border-[#EAEAEA]/20 bg-[#0A0A0A] p-6">
-                  <span className="text-[11px] font-bold tracking-[0.15em] text-[#FF2A2A] uppercase">ROUTED TO</span>
-                  <strong className="mt-2 block text-lg font-bold tracking-tight text-[#EAEAEA] uppercase">Municipal Water Board</strong>
-                  <span className="mt-1 block text-sm text-[#EAEAEA]/60 uppercase">Ward 4 Jurisdiction</span>
-                </div>
-                
-                <div className="border border-[#EAEAEA]/20 bg-[#0A0A0A] p-6">
-                  <span className="text-[11px] font-bold tracking-[0.15em] text-[#FF2A2A] uppercase">EXTRACTED INTENT</span>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="border border-[#EAEAEA]/40 px-3 py-1 text-xs font-bold text-[#EAEAEA] uppercase">[ INFRASTRUCTURE ]</span>
-                    <span className="border border-[#FF2A2A] px-3 py-1 text-xs font-bold text-[#FF2A2A] uppercase bg-[#FF2A2A]/10">[ WASTAGE ]</span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-3 block text-sm font-bold tracking-widest text-[#FF2A2A] uppercase">
-                  FINAL PAYLOAD
-                </label>
-                <textarea
-                  className="min-h-[140px] w-full resize-y border border-[#EAEAEA]/20 bg-[#0A0A0A] p-4 text-base leading-relaxed text-[#EAEAEA] outline-none focus:border-[#FF2A2A]"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="flex items-start gap-4 border border-[#EAEAEA]/20 bg-[#0A0A0A] p-6">
-                <input 
-                  type="checkbox" 
-                  id="anonymous" 
-                  checked={isAnonymous}
-                  onChange={(e) => setIsAnonymous(e.target.checked)}
-                  className="mt-1 h-5 w-5 appearance-none border border-[#EAEAEA] checked:bg-[#FF2A2A] checked:border-[#FF2A2A] cursor-pointer"
-                />
-                <div className="flex-1">
-                  <label htmlFor="anonymous" className="block text-sm font-bold text-[#EAEAEA] cursor-pointer uppercase tracking-widest">
-                    CRYPTOGRAPHIC ANONYMITY
-                  </label>
-                  <p className="mt-1 text-xs leading-relaxed text-[#EAEAEA]/60 uppercase tracking-wider">
-                    Shields PII. Verification hash retained by central authority.
-                  </p>
-                </div>
-              </div>
-
-              <button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="mt-4 flex w-full items-center justify-center border border-[#FF2A2A] bg-[#FF2A2A] px-8 py-5 text-sm font-bold text-white uppercase tracking-widest transition-colors hover:bg-transparent hover:text-[#FF2A2A] disabled:opacity-30"
-              >
-                {isSubmitting ? '[ SECURING... ]' : '[ CONFIRM & LODGE ]'}
-              </button>
-            </form>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  return <div className="min-h-screen font-sans bg-background px-4 py-12 pt-28 text-foreground sm:px-8"><div className="mx-auto w-full max-w-4xl border border-[var(--color-border)] rounded-xl bg-[var(--system-bg)] shadow-sm p-4 sm:p-8">
+    {step === "input" && <><p className="mb-6 text-sm text-[var(--label-secondary)]">{t("lodge.instruction")}</p><LodgeTerminal onAnalyze={onAnalyze} /></>}
+    {step === "processing" && <div aria-busy="true" className="flex min-h-[400px] flex-col items-center justify-center"><div className="h-10 w-10 animate-spin border-2 border-[var(--color-accent)] border-t-transparent rounded-full" /><p className="mt-6 text-sm font-semibold">{t("review.processing")}</p></div>}
+    {step === "review" && analysis && <form onSubmit={submit} className="font-sans"><h1 className="mb-8 text-3xl font-semibold tracking-tight">{t("lodge.reviewTitle")}</h1><RoutingResultCard result={analysis} routedTo={t("review.routedTo")} intent={t("review.intent")} />
+      <div className="mt-8"><label htmlFor="title" className="mb-2 block text-xs font-semibold text-[var(--label-secondary)]">{t("lodge.titleLabel")}</label><input id="title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder={t("lodge.titlePlaceholder") as string} className="w-full rounded-md border border-[var(--color-border)] bg-background p-4 outline-none focus:border-[var(--color-accent)]" /></div>
+      <div className="mt-6"><label htmlFor="payload" className="mb-2 block text-xs font-semibold text-[var(--label-secondary)]">{t("review.payload")}</label><textarea id="payload" value={description} onChange={(event) => setDescription(event.target.value)} required className="min-h-40 w-full rounded-md border border-[var(--color-border)] bg-background p-4 leading-7 outline-none focus:border-[var(--color-accent)]" /></div>
+      <label className="mt-6 flex cursor-pointer items-start gap-4 rounded-md border border-[var(--color-border)] bg-background p-5"><input type="checkbox" checked={masked} onChange={(event) => setMasked(event.target.checked)} className="mt-1 h-5 w-5 accent-[var(--color-accent)]" /><span><strong className="block text-sm font-medium">{t("review.mask")}</strong><small className="mt-1 block text-[var(--label-secondary)]">{t("review.maskHelp")}</small></span></label>
+      {error && <p role="alert" className="mt-4 rounded-md border border-[var(--system-red)] p-3 text-sm text-[var(--system-red)] bg-[var(--system-red)]/10">{error}</p>}
+      <button type="submit" disabled={submitting} className="mt-8 w-full rounded-md bg-foreground px-8 py-4 text-base font-medium text-background transition-transform duration-200 hover:scale-[0.98] active:scale-95 disabled:opacity-40">{submitting ? t("review.submitting") : t("review.submit")}</button>
+    </form>}
+  </div></div>;
 }

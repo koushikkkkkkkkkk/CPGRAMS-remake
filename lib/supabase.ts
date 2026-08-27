@@ -5,13 +5,19 @@ import { createClient } from '@supabase/supabase-js';
 // ============================================================================
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+// Supabase renamed the browser-safe "anon" key to a publishable key. Support
+// both names so existing deployments continue to work while new projects use
+// the current variable name.
+const supabasePublishableKey =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  'placeholder-key';
 
-if (supabaseUrl === 'https://placeholder.supabase.co' || supabaseAnonKey === 'placeholder-key') {
+if (supabaseUrl === 'https://placeholder.supabase.co' || supabasePublishableKey === 'placeholder-key') {
   console.warn("Supabase environment variables are missing. Please check your .env.local file.");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabasePublishableKey);
 
 // ============================================================================
 // Types
@@ -145,18 +151,21 @@ export async function submitGrievance(payload: GrievancePayload, isAnonymous: bo
  * @returns The status and assigned department, or null if not found
  */
 export async function getGrievanceStatus(trackingId: string) {
-  const { data, error } = await supabase
-    .from('tracked_grievances')
-    .select('status, assigned_department, tracking_id')
-    .eq('tracking_id', trackingId)
-    .single();
+  // Try the new schema first (tracking_hash)
+  let { data, error } = await supabase
+    .from('grievances')
+    .select('tracking_hash as tracking_id, status, assigned_department, urgency_level, tags, english_translation, title, description')
+    .eq('tracking_hash', trackingId)
+    .maybeSingle();
 
-  if (error) {
-    if (error.code === 'PGRST116') {
-      // Postgres error code for "Row not found"
-      return null;
-    }
-    throw error;
+  if (error || !data) {
+    // Try the RPC or fallback for older schema
+    const fallback = await supabase
+      .rpc('get_grievance_by_tracking_hash', { lookup_hash: trackingId })
+      .maybeSingle();
+    
+    if (fallback.error) throw fallback.error;
+    data = fallback.data;
   }
 
   return data;

@@ -1,254 +1,203 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-
-type SpeechRecognitionAlternativeLike = { transcript: string };
-
-type SpeechRecognitionResultLike = {
-  isFinal: boolean;
-  0: SpeechRecognitionAlternativeLike;
-};
-
-type SpeechRecognitionEventLike = {
-  resultIndex: number;
-  results: ArrayLike<SpeechRecognitionResultLike>;
-};
-
-type SpeechRecognitionLike = {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start: () => void;
-  stop: () => void;
-  abort: () => void;
-  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  onerror: ((event: { error: string }) => void) | null;
-  onend: (() => void) | null;
-};
-
-type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
-
-declare global {
-  interface Window {
-    SpeechRecognition?: SpeechRecognitionConstructor;
-    webkitSpeechRecognition?: SpeechRecognitionConstructor;
-  }
-}
+import { useTranslation } from "react-i18next";
 
 type LodgeTerminalProps = {
-  onSubmit: (description: string) => void;
+  onAnalyze: (raw: string) => void;
   storageKey?: string;
 };
 
 export default function LodgeTerminal({
-  onSubmit,
+  onAnalyze,
   storageKey = "civic_os_draft",
 }: LodgeTerminalProps) {
+  const { t, i18n } = useTranslation();
   const [description, setDescription] = useState("");
   const [isHydrated, setIsHydrated] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [telemetry, setTelemetry] = useState("[ SYSTEM READY ]");
+  const [telemetry, setTelemetry] = useState("");
+  const [isTranscribing, setIsTranscribing] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  const voiceBaseRef = useRef("");
-  const finalTranscriptRef = useRef("");
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
-  const resizeTextarea = () => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    textarea.style.height = "auto";
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  };
+  useEffect(() => {
+    setTelemetry(t("lodge.systemReady") || "SYSTEM READY");
+  }, [t]);
 
   useEffect(() => {
     const hydrateTimer = window.setTimeout(() => {
       try {
         const savedDraft = window.localStorage.getItem(storageKey);
-
         if (savedDraft) {
           setDescription(savedDraft);
-          setTelemetry("[ DRAFT RESTORED ]");
+          setTelemetry(t("lodge.draftRestored") || "DRAFT RESTORED");
         }
       } catch {
-        setTelemetry("[ LOCAL STORAGE UNAVAILABLE ]");
+        // ignore
       } finally {
         setIsHydrated(true);
       }
     }, 0);
-
     return () => window.clearTimeout(hydrateTimer);
-  }, [storageKey]);
-
-  useEffect(() => {
-    resizeTextarea();
-  }, [description]);
+  }, [storageKey, t]);
 
   useEffect(() => {
     if (!isHydrated) return;
-
     const saveTimer = window.setTimeout(() => {
       try {
         window.localStorage.setItem(storageKey, description);
-        setTelemetry("[ DRAFT AUTO-SAVED ]");
+        if (description.length > 0 && !isRecording && !isTranscribing) {
+          setTelemetry(t("lodge.draftSaved") || "DRAFT AUTO-SAVED");
+        }
       } catch {
-        setTelemetry("[ DRAFT SAVE FAILED ]");
+        // ignore
       }
     }, 350);
-
     return () => window.clearTimeout(saveTimer);
-  }, [description, isHydrated, storageKey]);
+  }, [description, isHydrated, isRecording, isTranscribing, storageKey, t]);
 
   useEffect(() => {
-    return () => recognitionRef.current?.abort();
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        mediaRecorderRef.current.stop();
+      }
+    };
   }, []);
 
-  const toggleRecording = () => {
+  const toggleRecording = async () => {
     if (isRecording) {
-      recognitionRef.current?.stop();
+      mediaRecorderRef.current?.stop();
       return;
     }
-
-    const Recognition =
-      window.SpeechRecognition ?? window.webkitSpeechRecognition;
-
-    if (!Recognition) {
-      setTelemetry("[ VOICE INPUT NOT SUPPORTED ]");
-      return;
-    }
-
-    const recognition = new Recognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-IN";
-
-    voiceBaseRef.current = description.trimEnd();
-    finalTranscriptRef.current = "";
-
-    recognition.onresult = (event) => {
-      let interimTranscript = "";
-
-      for (let index = event.resultIndex; index < event.results.length; index++) {
-        const transcript = event.results[index][0].transcript;
-
-        if (event.results[index].isFinal) {
-          finalTranscriptRef.current += transcript;
-        } else {
-          interimTranscript += transcript;
-        }
-      }
-
-      const separator = voiceBaseRef.current ? "\n" : "";
-      setDescription(
-        `${voiceBaseRef.current}${separator}${finalTranscriptRef.current}${interimTranscript}`,
-      );
-      setTelemetry("[ VOICE STREAM ACTIVE ]");
-    };
-
-    recognition.onerror = (event) => {
-      setIsRecording(false);
-      setTelemetry(`[ REC ERROR: ${event.error.toUpperCase()} ]`);
-    };
-
-    recognition.onend = () => {
-      setIsRecording(false);
-      setTelemetry("[ REC SESSION CLOSED ]");
-    };
-
-    recognitionRef.current = recognition;
-    recognition.start();
-    setIsRecording(true);
-    setTelemetry("[ REC SESSION OPEN ]");
-  };
-
-  const clearDraft = () => {
-    setDescription("");
 
     try {
-      window.localStorage.removeItem(storageKey);
-      setTelemetry("[ DRAFT PURGED ]");
-    } catch {
-      setTelemetry("[ DRAFT CLEAR FAILED ]");
-    }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
 
-    textareaRef.current?.focus();
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        audioChunksRef.current = [];
+        
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach((track) => track.stop());
+        
+        setIsRecording(false);
+        setIsTranscribing(true);
+        setTelemetry("TRANSCRIBING (AI)...");
+
+        try {
+          const formData = new FormData();
+          formData.append("audio", audioBlob, "recording.webm");
+          
+          const response = await fetch("/api/transcribe", {
+            method: "POST",
+            body: formData,
+          });
+          
+          if (!response.ok) throw new Error("Transcription failed");
+          
+          const data = await response.json();
+          if (data.text) {
+             const separator = description.trim() ? "\n" : "";
+             setDescription((prev) => `${prev.trim()}${separator}${data.text.trim()}`);
+             setTelemetry(t("lodge.systemReady") || "SYSTEM READY");
+          }
+        } catch (error) {
+          console.error(error);
+          setTelemetry("TRANSCRIPTION ERROR");
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setTelemetry(t("lodge.listening") || "LISTENING (MIC LIVE)...");
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+      setTelemetry("MIC ACCESS DENIED");
+    }
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     if (!description.trim()) {
-      setTelemetry("[ ALERT: DESCRIPTION REQUIRED ]");
       textareaRef.current?.focus();
       return;
     }
-
-    onSubmit(description.trim());
+    
+    onAnalyze(description.trim());
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full font-mono text-[#EAEAEA]">
-      <div className="border border-[#EAEAEA]/20 bg-[#0A0A0A]">
-        <div className="flex flex-col border-b border-[#EAEAEA]/20 sm:flex-row sm:items-center sm:justify-between">
-          <div className="border-b border-[#EAEAEA]/20 px-4 py-3 sm:border-b-0 sm:border-r">
-            <span className="text-xs font-bold tracking-[0.2em] text-[#FF2A2A]">
-              {"/// NEW ENTRY"}
-            </span>
-            <h1 className="mt-1 font-sans text-3xl font-black uppercase tracking-tighter sm:text-4xl">
-              Describe Incident
-            </h1>
+    <form onSubmit={handleSubmit} className="w-full font-sans text-foreground">
+      <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-background shadow-sm">
+        {/* Header */}
+        <div className="flex flex-col border-b border-[var(--color-border)] bg-[var(--tertiary-bg)] sm:flex-row sm:items-center sm:justify-between px-6 py-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">
+              {t("lodge.incidentDetails") || "Incident Details"}
+            </h2>
           </div>
-          <p aria-live="polite" className="px-4 py-3 text-xs font-bold tracking-wider text-[#EAEAEA]/60">
+          <p aria-live="polite" className="mt-2 sm:mt-0 text-xs font-semibold text-[var(--color-accent)]">
             {telemetry}
           </p>
         </div>
 
-        <div className="p-4 sm:p-6">
+        {/* Input Area */}
+        <div className="p-6">
           <label htmlFor="grievance_input" className="sr-only">
-            Incident description
+            {t("lodge.incidentDetails")}
           </label>
           <textarea
             ref={textareaRef}
             id="grievance_input"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder="> LOG ENTRY HERE..."
-            rows={7}
+            placeholder={t("lodge.placeholder") || "Type your report here..."}
             autoFocus
-            className="min-h-[260px] w-full resize-none border border-[#EAEAEA]/20 bg-[#0A0A0A] p-4 text-base leading-7 text-[#EAEAEA] outline-none placeholder:text-[#EAEAEA]/30 focus:border-[#FF2A2A] sm:p-6 sm:text-lg"
+            className="w-full resize-none bg-transparent p-0 text-base leading-relaxed text-foreground outline-none placeholder:text-[var(--label-tertiary)]"
+            style={{ minHeight: '220px' }}
           />
-          <div className="flex items-center justify-between border border-t-0 border-[#EAEAEA]/20 px-3 py-2 text-[11px] tracking-wider text-[#EAEAEA]/50">
-            <span>CHARS: {description.length.toString().padStart(4, "0")}</span>
-            <span>{isRecording ? "MIC: LIVE" : "MIC: STANDBY"}</span>
+          
+          <div className="mt-4 flex items-center justify-between border-t border-[var(--color-border)] pt-4 text-xs font-medium text-[var(--label-secondary)]">
+            <span>{t("lodge.characters") || "Characters"}: {description.length}</span>
+            <span className={isRecording ? "text-[var(--system-red)] animate-pulse" : ""}>
+              {isRecording ? t("lodge.micLive") || "Mic Live" : t("lodge.micStandby") || "Mic Standby"}
+            </span>
           </div>
         </div>
 
-        <div className="grid border-t border-[#EAEAEA]/20 sm:grid-cols-3">
+        {/* Actions */}
+        <div className="grid border-t border-[var(--color-border)] sm:grid-cols-2 bg-[var(--tertiary-bg)]">
           <button
             type="button"
             onClick={toggleRecording}
             aria-pressed={isRecording}
-            className={`min-h-14 border-b border-[#EAEAEA]/20 px-4 text-xs font-bold tracking-widest transition-colors sm:border-b-0 sm:border-r ${
+            className={`min-h-[56px] border-r border-[var(--color-border)] px-4 text-sm font-medium transition-colors ${
               isRecording
-                ? "border-[#FF2A2A] bg-[#FF2A2A] text-white"
-                : "text-[#EAEAEA] hover:bg-[#EAEAEA] hover:text-[#0A0A0A]"
+                ? "bg-[var(--system-red)] text-white"
+                : "text-[var(--label-primary)] hover:bg-[var(--color-border)]"
             }`}
           >
-            [ REC ] {isRecording ? "LIVE" : "VOICE INPUT"}
-          </button>
-          <button
-            type="button"
-            onClick={clearDraft}
-            className="min-h-14 border-b border-[#EAEAEA]/20 px-4 text-xs font-bold tracking-widest transition-colors hover:bg-[#EAEAEA] hover:text-[#0A0A0A] sm:border-b-0 sm:border-r"
-          >
-            [ CLEAR DRAFT ]
+            {isRecording ? (t("lodge.stopVoice") || "Stop Recording") : (t("lodge.useVoice") || "Record Voice")}
           </button>
           <button
             type="submit"
-            className="min-h-14 bg-[#EAEAEA] px-4 text-xs font-bold tracking-widest text-[#0A0A0A] transition-colors hover:bg-[#FF2A2A] hover:text-white"
+            className="min-h-[56px] bg-foreground px-4 text-sm font-medium text-background transition-colors hover:bg-[var(--label-secondary)]"
           >
-            [ ANALYZE ]
+            {t("lodge.analyze") || "Review Report"}
           </button>
         </div>
       </div>

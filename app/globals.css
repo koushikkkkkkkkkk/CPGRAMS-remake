@@ -2,15 +2,40 @@
 
 @layer base {
   :root {
+    --color-background: #F7F6F3;
+    --color-foreground: #111111;
+    --color-accent: #1F6C9F;
+    --color-border: #EAEAEA;
+    
+    /* System variables for status tracking */
+    --system-bg: #FFFFFF;
+    --tertiary-bg: #F9F9F8;
+    --label-primary: #111111;
+    --label-secondary: #787774;
+    --label-tertiary: #A1A1AA;
+    --separator-color: #EAEAEA;
+    --system-green: #346538;
+    --system-red: #9F2F2D;
+    --system-orange: #956400;
+    --system-blue: #1F6C9F;
+  }
+
+  .dark {
     --color-background: #0A0A0A;
     --color-foreground: #EAEAEA;
     --color-accent: #FF2A2A;
-    --color-border: #EAEAEA;
-  }
-  
-  /* Brutalist reset: No rounded edges anywhere */
-  * {
-    border-radius: 0 !important;
+    --color-border: #333333;
+
+    --system-bg: #121212;
+    --tertiary-bg: #1A1A1A;
+    --label-primary: #EAEAEA;
+    --label-secondary: #A1A1AA;
+    --label-tertiary: #71717A;
+    --separator-color: #333333;
+    --system-green: #30D158;
+    --system-red: #FF453A;
+    --system-orange: #FF9F0A;
+    --system-blue: #0A84FF;
   }
 }
 
@@ -19,4 +44,9 @@
   --color-foreground: var(--color-foreground);
   --color-accent: var(--color-accent);
   --color-border: var(--color-border);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
 }
