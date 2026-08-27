@@ -48,7 +48,7 @@ export default function LodgeGrievanceOS() {
         tags: (analysis as any).tags,
         englishTranslation: (analysis as any).englishTranslation
       }); 
-      window.localStorage.removeItem("civic_os_draft"); 
+      window.localStorage.removeItem("samadhan_draft"); 
       router.push(`/status/${trackingHash}`); 
     }
     catch (caught: any) {

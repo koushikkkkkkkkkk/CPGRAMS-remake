@@ -10,7 +10,7 @@ type LodgeTerminalProps = {
 
 export default function LodgeTerminal({
   onAnalyze,
-  storageKey = "civic_os_draft",
+  storageKey = "samadhan_draft",
 }: LodgeTerminalProps) {
   const { t, i18n } = useTranslation();
   const [description, setDescription] = useState("");

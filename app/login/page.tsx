@@ -43,7 +43,7 @@ export default function LoginOS() {
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔐</div>
           <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>
-            {step === "credentials" ? "Civic OS Login" : "Two-Factor Auth"}
+            {step === "credentials" ? "SAMADHAN Login" : "Two-Factor Auth"}
           </h1>
           <p style={{ fontSize: '0.95rem', margin: 0 }}>
             {step === "credentials" ? "Authenticate via National ID" : "Enter the verification code sent to your device"}

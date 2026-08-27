@@ -425,7 +425,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const savedLang = localStorage.getItem("civicos_lang");
+    const savedLang = localStorage.getItem("samadhan_lang");
     if (savedLang && ["en", "hi", "kn", "ta"].includes(savedLang)) {
       i18n.changeLanguage(savedLang);
     }

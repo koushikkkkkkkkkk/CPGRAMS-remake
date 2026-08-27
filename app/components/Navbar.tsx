@@ -24,8 +24,13 @@ export default function Navbar() {
     <>
       <nav className="fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--system-bg)]/80 backdrop-blur-md px-6 py-4 font-sans text-foreground">
         <div className="flex items-center gap-8">
-          <Link href="/" className="text-xl font-bold tracking-tight text-foreground hover:text-[var(--color-accent)] transition-colors">
-            CivicOS
+          <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-accent)] text-white shadow-sm">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+            </span>
+            <span className="text-[19px] font-bold tracking-tight text-foreground">
+              SAMADHAN
+            </span>
           </Link>
           
           {/* Desktop Nav Links */}
@@ -46,7 +51,7 @@ export default function Navbar() {
         
         {/* Desktop Utility Actions */}
         <div className="flex items-center gap-6 text-sm font-medium">
-          <label className="hidden sm:block"><span className="sr-only">Language</span><select value={i18n.resolvedLanguage || "en"} onChange={(event) => { const lang = event.target.value; void i18n.changeLanguage(lang); localStorage.setItem("civicos_lang", lang); }} className="rounded-md border border-[var(--color-border)] bg-[var(--system-bg)] px-2 py-1 font-sans text-xs text-[var(--label-secondary)] outline-none focus:border-[var(--color-accent)]">{supportedLanguages.map((language) => <option key={language} value={language}>{language.toUpperCase()}</option>)}</select></label>
+          <label className="hidden sm:block"><span className="sr-only">Language</span><select value={i18n.resolvedLanguage || "en"} onChange={(event) => { const lang = event.target.value; void i18n.changeLanguage(lang); localStorage.setItem("samadhan_lang", lang); }} className="rounded-md border border-[var(--color-border)] bg-[var(--system-bg)] px-2 py-1 font-sans text-xs text-[var(--label-secondary)] outline-none focus:border-[var(--color-accent)]">{supportedLanguages.map((language) => <option key={language} value={language}>{language.toUpperCase()}</option>)}</select></label>
           <div className="hidden sm:block">
             <ThemeToggle />
           </div>

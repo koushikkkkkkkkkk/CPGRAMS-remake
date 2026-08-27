@@ -15,8 +15,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CivicOS",
-  description: "Public service reporting platform.",
+  title: "SAMADHAN",
+  description: "Next Generation Public Grievance Redressal System",
 };
 
 export default function RootLayout({

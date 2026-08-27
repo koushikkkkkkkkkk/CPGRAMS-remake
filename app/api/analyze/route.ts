@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       throw new Error("GEMINI_API_KEY is not configured.");
     }
 
-    const systemPrompt = `You are an AI assistant for a civic grievance redressal portal in India (CMPGRAMS). 
+    const systemPrompt = `You are an AI assistant for a civic grievance redressal portal in India (SAMADHAN). 
 Analyze the following grievance text (which could be in English, Hindi, Kannada, Tamil, or a mix).
 You must output a JSON object with EXACTLY the following structure (do not include markdown wrapping like \`\`\`json):
 {
