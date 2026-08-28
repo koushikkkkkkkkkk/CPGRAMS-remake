@@ -23,30 +23,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No audio file provided" }, { status: 400 });
     }
 
-    // Write file to a temporary location to pass to Groq SDK
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    
-    // Create a temporary file path
-    const tempDir = os.tmpdir();
-    const tempFilePath = path.join(tempDir, `upload-${Date.now()}.webm`);
-    
-    fs.writeFileSync(tempFilePath, buffer);
-
-    let transcription;
-    try {
-      transcription = await groq.audio.transcriptions.create({
-        file: fs.createReadStream(tempFilePath),
-        model: "whisper-large-v3-turbo",
-        prompt: "The audio might be in English, Hindi, Kannada, or Tamil. Transcribe it exactly in the language spoken.",
-        response_format: "json",
-        temperature: 0.0,
-      });
-    } finally {
-      if (fs.existsSync(tempFilePath)) {
-        fs.unlinkSync(tempFilePath);
-      }
-    }
+    const transcription = await groq.audio.transcriptions.create({
+      file: file,
+      model: "whisper-large-v3-turbo",
+      prompt: "The audio might be in English, Hindi, Kannada, or Tamil. Transcribe it exactly in the language spoken.",
+      response_format: "json",
+      temperature: 0.0,
+    });
 
     return NextResponse.json({ text: transcription.text });
   } catch (error: any) {
