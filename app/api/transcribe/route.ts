@@ -4,12 +4,18 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
-
 export async function POST(request: Request) {
   try {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "GROQ_API_KEY environment variable is missing on Vercel." },
+        { status: 500 }
+      );
+    }
+
+    const groq = new Groq({ apiKey });
+
     const formData = await request.formData();
     const file = formData.get("audio") as File;
 
@@ -18,7 +24,6 @@ export async function POST(request: Request) {
     }
 
     // Write file to a temporary location to pass to Groq SDK
-    // The Groq SDK accepts fs.createReadStream()
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
@@ -28,16 +33,20 @@ export async function POST(request: Request) {
     
     fs.writeFileSync(tempFilePath, buffer);
 
-    const transcription = await groq.audio.transcriptions.create({
-      file: fs.createReadStream(tempFilePath),
-      model: "whisper-large-v3-turbo",
-      prompt: "The audio might be in English, Hindi, Kannada, or Tamil. Transcribe it exactly in the language spoken.",
-      response_format: "json",
-      temperature: 0.0,
-    });
-
-    // Cleanup temp file
-    fs.unlinkSync(tempFilePath);
+    let transcription;
+    try {
+      transcription = await groq.audio.transcriptions.create({
+        file: fs.createReadStream(tempFilePath),
+        model: "whisper-large-v3-turbo",
+        prompt: "The audio might be in English, Hindi, Kannada, or Tamil. Transcribe it exactly in the language spoken.",
+        response_format: "json",
+        temperature: 0.0,
+      });
+    } finally {
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
+    }
 
     return NextResponse.json({ text: transcription.text });
   } catch (error: any) {

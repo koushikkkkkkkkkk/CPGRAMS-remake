@@ -105,17 +105,20 @@ export default function LodgeTerminal({
             body: formData,
           });
           
-          if (!response.ok) throw new Error("Transcription failed");
-          
           const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.error || "Transcription failed");
+          }
+          
           if (data.text) {
              const separator = description.trim() ? "\n" : "";
              setDescription((prev) => `${prev.trim()}${separator}${data.text.trim()}`);
              setTelemetry(t("lodge.systemReady") || "SYSTEM READY");
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error(error);
-          setTelemetry("TRANSCRIPTION ERROR");
+          setTelemetry(error?.message ? error.message.toUpperCase() : "TRANSCRIPTION ERROR");
         } finally {
           setIsTranscribing(false);
         }
