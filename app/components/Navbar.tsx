@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ThemeToggle from "./ThemeToggle";
 import { useTranslation } from "react-i18next";
+import { supabase } from "../../lib/supabase";
 import "../../lib/i18n";
 import { supportedLanguages } from "../../lib/i18n";
 
@@ -12,6 +13,35 @@ export default function Navbar() {
   const pathname = usePathname();
   const { t, i18n } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const getInitials = () => {
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name.substring(0, 2).toUpperCase();
+    }
+    if (user?.email) {
+      // If email is citizen@samadhan... show DE for demo, else first two of email
+      if (user.email.startsWith("citizen@")) return "DE";
+      return user.email.substring(0, 2).toUpperCase();
+    }
+    return "US";
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   const links = [
     { href: "/", label: t("nav.home") },
@@ -67,9 +97,15 @@ export default function Navbar() {
             {isMobileMenuOpen ? "Close" : "Menu"}
           </button>
 
-          <Link href="/login" className="bg-foreground text-background px-4 py-2 font-medium hover:opacity-80 transition-opacity shadow-sm">
-            {t("nav.login")}
-          </Link>
+          {user ? (
+            <button onClick={handleLogout} className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-accent)] text-xs font-bold text-white shadow-sm hover:opacity-80 transition-opacity" title="Logout">
+              {getInitials()}
+            </button>
+          ) : (
+            <Link href="/login" className="bg-foreground text-background px-4 py-2 font-medium hover:opacity-80 transition-opacity shadow-sm">
+              {t("nav.login")}
+            </Link>
+          )}
         </div>
       </nav>
 

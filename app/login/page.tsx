@@ -6,12 +6,15 @@ import { supabase } from "../../lib/supabase";
 
 export default function LoginOS() {
   const router = useRouter();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [error, setError] = useState("");
 
   const handleDemoFill = () => {
+    setIsSignUp(false);
     setEmail("citizen@samadhan.gov.in");
     setPassword("DemoCitizen123!");
     setError("");
@@ -23,23 +26,33 @@ export default function LoginOS() {
     setError("");
 
     try {
-      // 1. Try to sign in
-      let { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      // 2. If it fails with invalid credentials, it might be a new demo user. Let's auto-signup for the hackathon.
-      if (signInError && signInError.message.includes("Invalid login")) {
+      if (isSignUp) {
+        // Sign Up
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            data: { full_name: name.trim() || email.split("@")[0] }
+          }
         });
-        
         if (signUpError) throw signUpError;
-        data = signUpData as any;
-      } else if (signInError) {
-        throw signInError;
+      } else {
+        // Sign In
+        let { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        // If it fails with invalid credentials and it's the demo account, auto-signup
+        if (signInError && signInError.message.includes("Invalid login") && email.includes("samadhan.gov.in")) {
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+          });
+          if (signUpError) throw signUpError;
+        } else if (signInError) {
+          throw signInError;
+        }
       }
 
       // Success! Redirect to home
@@ -68,11 +81,28 @@ export default function LoginOS() {
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
           </div>
-          <h1 className="mb-2 text-2xl font-bold tracking-tight md:text-3xl">SAMADHAN Login</h1>
-          <p className="text-sm font-medium text-[var(--label-secondary)]">Sign in to access your civic dashboard</p>
+          <h1 className="mb-2 text-2xl font-bold tracking-tight md:text-3xl">
+            {isSignUp ? "Create Account" : "SAMADHAN Login"}
+          </h1>
+          <p className="text-sm font-medium text-[var(--label-secondary)]">
+            {isSignUp ? "Register for your civic dashboard" : "Sign in to access your civic dashboard"}
+          </p>
         </div>
 
         <form onSubmit={handleCredentialsSubmit} className="flex flex-col gap-5">
+          {isSignUp && (
+            <div>
+              <label className="mb-2 block pl-1 text-xs font-semibold uppercase tracking-wider text-[var(--label-secondary)]">Full Name</label>
+              <input 
+                type="text" 
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--tertiary-bg)] px-4 py-3 text-sm font-medium text-foreground outline-none transition-colors placeholder:text-[var(--label-tertiary)] focus:border-[var(--color-accent)] focus:bg-[var(--system-bg)]" 
+                placeholder="John Doe" 
+                required 
+              />
+            </div>
+          )}
           <div>
             <label className="mb-2 block pl-1 text-xs font-semibold uppercase tracking-wider text-[var(--label-secondary)]">Email Address</label>
             <input 
@@ -108,10 +138,20 @@ export default function LoginOS() {
               disabled={isAuthenticating}
               className="w-full rounded-xl bg-foreground px-4 py-3.5 text-sm font-semibold text-background transition-transform duration-200 hover:scale-[0.98] active:scale-95 disabled:opacity-50 disabled:hover:scale-100 shadow-lg shadow-foreground/10"
             >
-              {isAuthenticating ? "Authenticating..." : "Continue"}
+              {isAuthenticating ? (isSignUp ? "Creating..." : "Authenticating...") : (isSignUp ? "Sign Up" : "Continue")}
             </button>
           </div>
         </form>
+        
+        <div className="mt-4 text-center">
+          <button 
+            type="button" 
+            onClick={() => { setIsSignUp(!isSignUp); setError(""); }}
+            className="text-sm font-medium text-[var(--color-accent)] hover:underline"
+          >
+            {isSignUp ? "Already have an account? Sign In" : "Need an account? Sign Up"}
+          </button>
+        </div>
 
         <div className="mt-8 flex flex-col items-center gap-4">
           <div className="flex w-full items-center gap-4">

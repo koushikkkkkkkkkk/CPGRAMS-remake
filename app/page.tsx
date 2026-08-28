@@ -1,12 +1,22 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { supabase } from "../lib/supabase";
 import "../lib/i18n";
 
 export default function CitizenPortal() {
   const router = useRouter();
   const { t } = useTranslation();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.replace("/login");
+      }
+    });
+  }, [router]);
 
   const citizenStats = [
     { label: t("home.stat1Label"), value: "18,240", detail: t("home.stat1Detail") },
