@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import "../../lib/i18n";
@@ -9,30 +9,30 @@ export default function StatusHub() {
   const router = useRouter();
   const { t } = useTranslation();
   const [trackingId, setTrackingId] = useState("");
+  const [recentGrievances, setRecentGrievances] = useState<any[]>([]);
 
-  const recentGrievances = [
-    {
-      id: "JANS-2026-8891X",
-      title: "Leaking water pipe near main junction",
-      date: "Aug 23, 2026",
-      status: "action_taken",
-      department: "Water Supply & Sanitation"
-    },
-    {
-      id: "JANS-2026-7732A",
-      title: "Potholes on 4th Cross Road",
-      date: "Aug 10, 2026",
-      status: "solved",
-      department: "Public Works Department"
-    },
-    {
-      id: "JANS-2026-9910B",
-      title: "Streetlights not working in Sector 5",
-      date: "Aug 24, 2026",
-      status: "no_action",
-      department: "Electricity Board"
+  useEffect(() => {
+    async function fetchRecent() {
+      // Dynamic import to avoid SSR issues if any, or just import at the top
+      const { supabase } = await import("../../lib/supabase");
+      const { data } = await supabase
+        .from('grievances')
+        .select('tracking_hash, title, status, assigned_department, created_at')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (data && data.length > 0) {
+        setRecentGrievances(data.map(g => ({
+          id: g.tracking_hash,
+          title: g.title,
+          date: g.created_at ? new Date(g.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Recently",
+          status: g.status === 'RECEIVED' ? 'no_action' : g.status === 'IN_PROGRESS' ? 'action_taken' : 'solved',
+          department: g.assigned_department
+        })));
+      }
     }
-  ];
+    fetchRecent();
+  }, []);
 
   const getStatusStyles = (status: string) => {
     switch (status) {

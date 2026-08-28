@@ -153,7 +153,7 @@ export default function PipelineStatusView() {
                 </div>
                 {grievanceData.urgency_level && (
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.875rem', color: 'var(--label-secondary)' }}>AI Urgency</span>
+                    <span style={{ fontSize: '0.875rem', color: 'var(--label-secondary)' }}>Urgency</span>
                     <strong style={{ fontSize: '0.875rem', color: grievanceData.urgency_level === 'High' ? 'var(--system-red)' : 'var(--label-primary)', fontWeight: 500 }}>{grievanceData.urgency_level}</strong>
                   </div>
                 )}
@@ -169,7 +169,7 @@ export default function PipelineStatusView() {
                     
                     return (
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--label-secondary)' }}>AI Tags</span>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--label-secondary)' }}>Tags</span>
                         <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                           {parsedTags.map((t, i) => <span key={i} style={{ fontSize: '0.75rem', background: 'var(--separator-color)', padding: '2px 6px', borderRadius: '4px' }}>{t}</span>)}
                         </div>
@@ -179,7 +179,7 @@ export default function PipelineStatusView() {
                 )}
                 {grievanceData.english_translation && (
                   <div style={{ display: 'flex', flexDirection: 'column', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--separator-color)' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--label-secondary)', marginBottom: '4px' }}>English Translation (AI)</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--label-secondary)', marginBottom: '4px' }}>English Translation</span>
                     <p style={{ fontSize: '0.875rem', color: 'var(--label-primary)', margin: 0, fontStyle: 'italic' }}>{grievanceData.english_translation}</p>
                   </div>
                 )}
