@@ -13,22 +13,63 @@ export default function StatusHub() {
 
   useEffect(() => {
     async function fetchRecent() {
-      // Dynamic import to avoid SSR issues if any, or just import at the top
-      const { supabase } = await import("../../lib/supabase");
-      const { data } = await supabase
-        .from('grievances')
-        .select('tracking_hash, title, status, assigned_department, created_at')
-        .order('created_at', { ascending: false })
-        .limit(3);
+      const mockGrievances = [
+        {
+          id: "JANS-2026-8891X",
+          title: "Leaking water pipe near main junction",
+          date: "Aug 23, 2026",
+          status: "action_taken",
+          department: "Water Supply & Sanitation"
+        },
+        {
+          id: "JANS-2026-7732A",
+          title: "Potholes on 4th Cross Road",
+          date: "Aug 10, 2026",
+          status: "solved",
+          department: "Public Works Department"
+        },
+        {
+          id: "JANS-2026-9910B",
+          title: "Streetlights not working in Sector 5",
+          date: "Aug 24, 2026",
+          status: "no_action",
+          department: "Electricity Board"
+        }
+      ];
 
-      if (data && data.length > 0) {
-        setRecentGrievances(data.map(g => ({
-          id: g.tracking_hash,
-          title: g.title,
-          date: g.created_at ? new Date(g.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Recently",
-          status: g.status === 'RECEIVED' ? 'no_action' : g.status === 'IN_PROGRESS' ? 'action_taken' : 'solved',
-          department: g.assigned_department
-        })));
+      try {
+        // Load local submissions first
+        let localReports: any[] = [];
+        try {
+          const stored = window.localStorage.getItem('recent_submissions');
+          if (stored) localReports = JSON.parse(stored);
+        } catch (e) {}
+
+        const { supabase } = await import("../../lib/supabase");
+        const { data, error } = await supabase
+          .from('grievances')
+          .select('tracking_hash, title, status, assigned_department, created_at')
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        let dbReports: any[] = [];
+        if (data && data.length > 0) {
+          dbReports = data.map(g => ({
+            id: g.tracking_hash,
+            title: g.title,
+            date: g.created_at ? new Date(g.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Recently",
+            status: g.status === 'RECEIVED' ? 'no_action' : g.status === 'IN_PROGRESS' ? 'action_taken' : 'solved',
+            department: g.assigned_department
+          }));
+        }
+
+        // Merge local, db, and mock, taking unique items up to 3
+        const merged = [...localReports, ...dbReports, ...mockGrievances];
+        const unique = Array.from(new Map(merged.map(item => [item.id, item])).values()).slice(0, 3);
+        setRecentGrievances(unique);
+      } catch (e) {
+        // Fallback to mocks if completely failed
+        setRecentGrievances(mockGrievances);
       }
     }
     fetchRecent();

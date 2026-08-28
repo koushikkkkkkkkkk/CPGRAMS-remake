@@ -49,6 +49,21 @@ export default function LodgeGrievanceOS() {
         englishTranslation: (analysis as any).englishTranslation
       }); 
       window.localStorage.removeItem("samadhan_draft"); 
+      
+      // Save to local storage for instant display in Status Hub (bypasses Supabase RLS)
+      try {
+        const stored = window.localStorage.getItem('recent_submissions');
+        const recent = stored ? JSON.parse(stored) : [];
+        recent.unshift({
+          id: trackingHash,
+          title: title.trim() || description.slice(0, 80),
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          status: 'no_action',
+          department: analysis.department
+        });
+        window.localStorage.setItem('recent_submissions', JSON.stringify(recent.slice(0, 3)));
+      } catch (e) {}
+      
       router.push(`/status/${trackingHash}`); 
     }
     catch (caught: any) {
