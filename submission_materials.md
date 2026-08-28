@@ -5,8 +5,8 @@
 **Live Link:** [https://cpgrams-remake.vercel.app/](https://cpgrams-remake.vercel.app/)
 
 *(If your app requires logging in to see the citizen dashboard or officer dashboard, provide the mock credentials below. If it's open, you can remove this part.)*
-- **Citizen Login:** citizen@example.com / password123
-- **Officer Login:** officer@example.com / password123
+- **Citizen Login:** citizen@samadhan.gov.in / DemoCitizen123!
+- *(Or just click the "Use Demo Credentials" button on the Login page)*
 
 ---
 
