@@ -49,7 +49,7 @@ SAMADHAN is vastly superior to the current solution because it eliminates the la
 **Speaker 2:** "For the second half, I'll explain how we built this. The frontend is built on **Next.js** and **Tailwind CSS** to ensure a lightning-fast, mobile-responsive experience—crucial since most citizens access services via smartphones. For our database and authentication, we rely on **Supabase**."
 
 **(1:25 - 1:45) AI Integrations**
-**Speaker 2:** "The core magic happens via two APIs. We use the **Groq SDK** running the Whisper-large model for transcription. We chose Groq because its inference speed is unmatched, making voice processing feel instantaneous. For the natural language processing, we use the **Gemini 1.5 Flash 8B** model."
+**Speaker 2:** "The core magic happens via two APIs. We use the **Groq SDK** running the Whisper-large model for transcription. We chose Groq because its inference speed is unmatched, making voice processing feel instantaneous. For the natural language processing, we use the **Gemini 2.5 Flash Lite** model."
 
 **(1:45 - 2:00) Why We Made These Choices**
-**Speaker 2:** "We chose Gemini 1.5 Flash 8B because it's incredibly lightweight, avoids rate-limit bottlenecks, and perfectly extracts structured JSON data—like departments and urgency levels—from messy, multilingual audio. SAMADHAN bridges the digital divide with voice, and automates bureaucracy with AI."
+**Speaker 2:** "We chose Gemini 2.5 Flash Lite because it's incredibly fast, lightweight, provides high rate-limit headroom, and perfectly extracts structured JSON data—like departments and urgency levels—from messy, multilingual audio. SAMADHAN bridges the digital divide with voice, and automates bureaucracy with AI."
