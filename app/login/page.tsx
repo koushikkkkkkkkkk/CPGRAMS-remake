@@ -66,7 +66,7 @@ export default function LoginOS() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 font-sans text-foreground">
+    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-background px-4 font-sans text-foreground">
       {/* Decorative background gradients */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden flex justify-center">
         <div className="absolute -top-[10%] -left-[10%] h-[500px] w-[500px] rounded-full bg-[var(--color-accent)] opacity-10 blur-[100px]" />
